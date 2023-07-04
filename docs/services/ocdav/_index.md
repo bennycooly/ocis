@@ -1,6 +1,6 @@
 ---
 title: ocDAV
-date: 2023-05-31T13:33:51.029749931+02:00
+date: 2023-09-21T09:08:15.223649+02:00
 weight: 20
 geekdocRepo: https://github.com/owncloud/ocis
 geekdocEditPath: edit/master/services/ocdav
@@ -12,8 +12,8 @@ geekdocCollapseSection: true
 
 ## Abstract
 
-The ocdav service provides the WebDAV API which is required by ownCloud clients. Previews (thumbnails) are provided by the [WebDAV service](../webdav).
 
+The ocdav service provides the WebDAV API which is required by ownCloud clients. Previews (thumbnails) are provided by the [WebDAV service](../webdav).
 
 ## Table of Contents
 
