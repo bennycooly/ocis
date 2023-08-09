@@ -41,6 +41,9 @@ trait Provisioning {
 	 * key is the lowercase username, value is an array of user attributes
 	 */
 	private array $createdUsers = [];
+	private FeatureContext $featureContext;
+
+	public SpacesContext $spacesContext;
 
 	/**
 	 * list of users that were created on the remote server during test runs
@@ -5156,29 +5159,24 @@ trait Provisioning {
 	}
 
 	/**
-	 * @When the administrator sets the quota of user :user to :quota using the provisioning API
+	 * @When the administrator sets the quota of user :user to :quota
 	 *
 	 * @param string $user
-	 * @param string $quota
+	 * @param int $quota
 	 *
 	 * @return void
 	 */
-	public function adminSetsUserQuotaToUsingTheProvisioningApi(string $user, string $quota):void {
-		$user = $this->getActualUsername($user);
-		$body
-			= [
-			'key' => 'quota',
-			'value' => $quota,
-		];
-
-		$this->response = OcsApiHelper::sendRequest(
+	public function adminSetsUserQuotaToUsingTheGraphApi(string $user, int $quota):void {
+		$adminUser = $this->getAdminUsername();
+		$bodyData = ["quota" => ["total" => $quota]];
+		$spaceId = $this->spacesContext->getSpaceIdByName($user, "Personal");
+		$body = json_encode($bodyData, JSON_THROW_ON_ERROR);
+		$this->response = \TestHelpers\GraphHelper::updateSpace(
 			$this->getBaseUrl(),
-			$this->getAdminUsername(),
+			$adminUser,
 			$this->getAdminPassword(),
-			"PUT",
-			"/cloud/users/$user",
-			$this->getStepLineRef(),
-			$body
+			$body,
+			$spaceId
 		);
 	}
 
@@ -5186,24 +5184,24 @@ trait Provisioning {
 	 * @Given the quota of user :user has been set to :quota
 	 *
 	 * @param string $user
-	 * @param string $quota
+	 * @param int $quota
 	 *
 	 * @return void
 	 */
-	public function theQuotaOfUserHasBeenSetTo(string $user, string $quota):void {
-		$this->adminSetsUserQuotaToUsingTheProvisioningApi($user, $quota);
+	public function theQuotaOfUserHasBeenSetTo(string $user, int $quota):void {
+		$this->adminSetsUserQuotaToUsingTheGraphApi($user, $quota);
 		$this->theHTTPStatusCodeShouldBe(200);
 	}
 
 	/**
-	 * @When the administrator gives unlimited quota to user :user using the provisioning API
+	 * @When the administrator gives unlimited quota to user :user
 	 *
 	 * @param string $user
 	 *
 	 * @return void
 	 */
-	public function adminGivesUnlimitedQuotaToUserUsingTheProvisioningApi(string $user):void {
-		$this->adminSetsUserQuotaToUsingTheProvisioningApi($user, 'none');
+	public function adminGivesUnlimitedQuotaToUserUsingTheGraphApi(string $user):void {
+		$this->adminSetsUserQuotaToUsingTheGraphApi($user, 0);
 	}
 
 	/**
@@ -5214,7 +5212,7 @@ trait Provisioning {
 	 * @return void
 	 */
 	public function userHasBeenGivenUnlimitedQuota(string $user):void {
-		$this->theQuotaOfUserHasBeenSetTo($user, 'none');
+		$this->theQuotaOfUserHasBeenSetTo($user, 0);
 	}
 
 	/**

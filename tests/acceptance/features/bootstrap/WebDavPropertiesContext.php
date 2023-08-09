@@ -973,6 +973,7 @@ class WebDavPropertiesContext implements Context {
 				[$property]
 			)
 		);
+
 		$this->theSingleResponseShouldContainAPropertyWithValueAndAlternative(
 			$property,
 			$expectedValue,

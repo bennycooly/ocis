@@ -1,4 +1,4 @@
-@api @issue-1313 @skipOnGraph
+@api @issue-1313
 Feature: get quota
   As a user
   I want to be able to find out my available storage quota
@@ -11,9 +11,9 @@ Feature: get quota
 
   Scenario Outline: retrieving folder quota when no quota is set
     Given using <dav-path-version> DAV path
-    When the administrator gives unlimited quota to user "Alice" using the provisioning API
+    When the administrator gives unlimited quota to user "Alice"
     Then the HTTP status code should be "200"
-    And as user "Alice" folder "/" should contain a property "d:quota-available-bytes" with value "-3"
+    And as user "Alice" folder "/" should contain a property "d:quota-available-bytes" with value "0"
     Examples:
       | dav-path-version |
       | old              |
@@ -23,9 +23,9 @@ Feature: get quota
   @smokeTest
   Scenario Outline: retrieving folder quota when quota is set
     Given using <dav-path-version> DAV path
-    When the administrator sets the quota of user "Alice" to "10 MB" using the provisioning API
+    When the administrator sets the quota of user "Alice" to 10000000
     Then the HTTP status code should be "200"
-    And as user "Alice" folder "/" should contain a property "d:quota-available-bytes" with value "10485406"
+    And as user "Alice" folder "/" should contain a property "d:quota-available-bytes" with value "10000000"
     Examples:
       | dav-path-version |
       | old              |
@@ -37,7 +37,7 @@ Feature: get quota
     Given using <dav-path-version> DAV path
     And user "Brian" has been created with default attributes and small skeleton files
     And user "Alice" has been given unlimited quota
-    And the quota of user "Brian" has been set to "10 MB"
+    And the quota of user "Brian" has been set to 10000000
     And user "Brian" has created folder "/testquota"
     And user "Brian" has created a share with settings
       | path        | testquota |
@@ -48,7 +48,7 @@ Feature: get quota
       | propertyName            |
       | d:quota-available-bytes |
     Then the HTTP status code should be "200"
-    And the single response should contain a property "d:quota-available-bytes" with value "10485406"
+    And the single response should contain a property "d:quota-available-bytes" with value "10000000"
     Examples:
       | dav-path-version |
       | old              |
