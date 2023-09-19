@@ -31,6 +31,7 @@ use TestHelpers\UploadHelper;
 use TestHelpers\WebDavHelper;
 use TestHelpers\HttpRequestHelper;
 use TestHelpers\Asserts\WebDav as WebDavAssert;
+use TestHelpers\GraphHelper;
 
 /**
  * WebDav functions
@@ -473,7 +474,7 @@ trait WebDav {
 			[],
 			null,
 			"files",
-			'2',
+			null,
 			false,
 			null,
 			$urlParameter,
@@ -3036,7 +3037,11 @@ trait WebDav {
 		?string $content,
 		string $destination
 	):void {
-		$this->uploadFileWithContent($user, $content, $destination);
+		if ($this->getDavPathVersion() === 3 && str_contains($destination, 'Shares')) {
+			$this->setResponse($this->userDownloadsOrUploadsSharedResource($user, $destination, 'PUT', null, null, $content));
+		} else {
+			$this->uploadFileWithContent($user, $content, $destination);
+		}
 		$this->pushToLastHttpStatusCodesArray();
 	}
 
@@ -4641,14 +4646,76 @@ trait WebDav {
 	 * @return void
 	 */
 	public function downloadPreviewOfFiles(string $user, string $path, string $width, string $height):void {
-		$response = $this->downloadPreviews(
+		if ($this->getDavPathVersion() === 3 && str_contains($path, 'Shares')) {
+			$this->setResponse($this->userDownloadsOrUploadsSharedResource($user, $path, 'GET', $width, $height));
+		} else {
+			$this->setResponse($this->downloadPreviews($user, $path, null, $width, $height));
+		}
+	}
+
+	/**
+	 * @param string $user
+	 * @param string $path
+	 * @param string $method
+	 * @param string|null $width
+	 * @param string|null $height
+	 * @param string|null $content
+	 *
+	 * @return ResponseInterface
+	 * @throws GuzzleException
+	 */
+	public function userDownloadsOrUploadsSharedResource(
+		string $user,
+		string $path,
+		string $method,
+		?string $width,
+		?string $height,
+		?string $content = null
+	): ResponseInterface {
+		$user = $this->getActualUsername($user);
+		$path = trim($path, "/");
+		$pathArray = explode("/", $path);
+
+		$shareMountId = GraphHelper::getShareMountId(
+			$this->getBaseUrl(),
+			$this->getStepLineRef(),
 			$user,
-			$path,
-			null,
-			$width,
-			$height
+			$this->getPasswordForUser($user),
+			$pathArray[1]
 		);
-		$this->setResponse($response);
+
+		if (\count($pathArray) > 2) {
+			$pathArray = \array_slice($pathArray, 2);
+			$path = '/' . implode("/", array_map("strval", $pathArray));
+		} else {
+			$path = null;
+		}
+
+		if ($width !== null && $height !== null) {
+			$urlParameter = [
+				'x' => $width,
+				'y' => $height,
+				'forceIcon' => '0',
+				'preview' => '1'
+			];
+			$urlParameter = \http_build_query($urlParameter, '', '&');
+		} else {
+			$urlParameter = null;
+		}
+		$sharesPath = $shareMountId . $path . '/?' . $urlParameter;
+
+		$davPath = WebDavHelper::getDavPath($user, $this->getDavPathVersion());
+		$fullUrl = $this->getBaseUrl() . $davPath . $sharesPath;
+
+		return HttpRequestHelper::sendRequest(
+			$fullUrl,
+			$this->getStepLineRef(),
+			$method,
+			$user,
+			$this->getPasswordForUser($user),
+			null,
+			$content
+		);
 	}
 
 	/**

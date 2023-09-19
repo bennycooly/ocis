@@ -150,6 +150,8 @@ Feature: previews of files downloaded through the webdav API
       | old              | example.gif |
       | new              | lorem.txt   |
       | new              | example.gif |
+      | spaces           | lorem.txt   |
+      | spaces           | example.gif |
 
 
   Scenario Outline: user tries to download previews of other users files
@@ -221,6 +223,7 @@ Feature: previews of files downloaded through the webdav API
       | dav-path-version |
       | old              |
       | new              |
+      | spaces           |
 
 
   Scenario Outline: it should update the preview content if the file content is updated (content with UTF chars)
@@ -259,6 +262,7 @@ Feature: previews of files downloaded through the webdav API
       | dav-path-version |
       | old              |
       | new              |
+      | spaces           |
 
 
   Scenario Outline: updates to a group shared file should change the preview for both sharees and sharers
@@ -290,3 +294,4 @@ Feature: previews of files downloaded through the webdav API
       | dav-path-version |
       | old              |
       | new              |
+      | spaces           |
