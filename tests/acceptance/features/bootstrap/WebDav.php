@@ -4888,7 +4888,6 @@ trait WebDav {
 				$fileFound = $this->findEntryFromPropfindResponse(
 					$resource,
 					$user,
-					$method,
 					"files",
 					$folderpath
 				);
@@ -5063,7 +5062,7 @@ trait WebDav {
 			},
 			$elementRows
 		);
-		$resultEntries = $this->findEntryFromPropfindResponse(null, $user, "REPORT");
+		$resultEntries = $this->findEntryFromSearchResponse();
 		foreach ($resultEntries as $resultEntry) {
 			Assert::assertContains($resultEntry, $expectedEntries);
 		}
@@ -5139,7 +5138,7 @@ trait WebDav {
 		$type = $this->usingOldDavPath ? "public-files" : "public-files-new";
 		foreach ($table->getHash() as $row) {
 			$path = $this->substituteInLineCodes($row['name']);
-			$res = $this->findEntryFromPropfindResponse($path, $user, null, $type);
+			$res = $this->findEntryFromPropfindResponse($path, $user, $type);
 			Assert::assertNotFalse($res, "expected $path to be in DAV response but was not found");
 		}
 	}
@@ -5158,7 +5157,7 @@ trait WebDav {
 		$type = $this->usingOldDavPath ? "public-files" : "public-files-new";
 		foreach ($table->getHash() as $row) {
 			$path = $this->substituteInLineCodes($row['name']);
-			$res = $this->findEntryFromPropfindResponse($path, $user, null, $type);
+			$res = $this->findEntryFromPropfindResponse($path, $user, $type);
 			Assert::assertFalse($res, "expected $path to not be in DAV response but was found");
 		}
 	}
@@ -5279,7 +5278,6 @@ trait WebDav {
 	 *
 	 * @param string|null $entryNameToSearch
 	 * @param string|null $user
-	 * @param string|null $method
 	 * @param string $type
 	 * @param string $folderPath
 	 *
@@ -5294,7 +5292,6 @@ trait WebDav {
 	public function findEntryFromPropfindResponse(
 		?string $entryNameToSearch = null,
 		?string $user = null,
-		?string $method = null,
 		string $type = "files",
 		string $folderPath = ''
 	) {
@@ -5323,19 +5320,6 @@ trait WebDav {
 		$results = [];
 		foreach ($multistatusResults as $multistatusResult) {
 			$entryPath = $multistatusResult['value'][0]['value'];
-			if ($method === "REPORT") {
-				if ($entryNameToSearch !== null && str_ends_with($entryPath, $entryNameToSearch)) {
-					return $multistatusResult;
-				} else {
-					$spaceId = (WebDavHelper::$SPACE_ID_FROM_OCIS) ?: WebDavHelper::getPersonalSpaceIdForUser(
-						$this->getBaseUrl(),
-						$user,
-						$this->getPasswordForUser($user),
-						$this->getStepLineRef()
-					);
-					$topWebDavPath = "/remote.php/dav/spaces/" . $spaceId . "/" . $folderPath;
-				}
-			}
 			$entryName = \str_replace($topWebDavPath, "", $entryPath);
 			$entryName = \rawurldecode($entryName);
 			$entryName = \trim($entryName, "/");
