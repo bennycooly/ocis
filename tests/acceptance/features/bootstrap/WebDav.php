@@ -4881,9 +4881,10 @@ trait WebDav {
 				continue;
 			}
 			if ($method === "REPORT") {
-				$fileFound = $this->findEntryFromSearchResponse(
+				$xmlItem = $this->findEntryFromSearchResponse(
 					$resource
 				);
+				$fileFound = !\is_bool($xmlItem) ? $xmlItem->xpath("d:propstat//oc:name") : $xmlItem;
 			} else {
 				$fileFound = $this->findEntryFromPropfindResponse(
 					$resource,
@@ -4892,7 +4893,6 @@ trait WebDav {
 					$folderpath
 				);
 			}
-
 			if ($should) {
 				Assert::assertNotEmpty(
 					$fileFound,
@@ -5371,7 +5371,7 @@ trait WebDav {
 			}
 			$resourcePath = \rawurldecode($resourcePath);
 			if ($entryNameToSearch === $resourcePath) {
-				return $resourcePath;
+				return $item;
 			}
 			if ($searchForHighlightString) {
 				$actualHighlightString =  $item->xpath("d:propstat//oc:highlights");
