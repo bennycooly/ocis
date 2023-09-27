@@ -821,14 +821,28 @@ def localApiTests(suite, storage, extra_environment = {}):
     for item in extra_environment:
         environment[item] = extra_environment[item]
 
-    return [{
-        "name": "localApiTests-%s-%s" % (suite, storage),
-        "image": OC_CI_PHP % DEFAULT_PHP_VERSION,
-        "environment": environment,
-        "commands": [
-            "make test-acceptance-api",
-        ],
-    }]
+    return [
+        {
+            "name": "localApiTests-%s-%s" % (suite, storage),
+            "image": OC_CI_PHP % DEFAULT_PHP_VERSION,
+            "environment": environment,
+            "commands": [
+                "make test-acceptance-api",
+            ],
+        },
+        {
+            "name": "logs",
+            "image": OC_CI_PHP % DEFAULT_PHP_VERSION,
+            "commands": [
+                "cat %s/tests/acceptance/logs/access.log" % dirs["base"],
+            ],
+            "when": {
+                "status": [
+                    "failure",
+                ],
+            },
+        },
+    ]
 
 def cs3ApiTests(ctx, storage, accounts_hash_difficulty = 4):
     return {
@@ -1004,6 +1018,18 @@ def coreApiTests(ctx, part_number = 1, number_of_parts = 1, storage = "ocis", ac
                          "commands": [
                              "make -C %s test-acceptance-from-core-api" % (dirs["base"]),
                          ],
+                     },
+                     {
+                         "name": "logs",
+                         "image": OC_CI_PHP % DEFAULT_PHP_VERSION,
+                         "commands": [
+                             "cat %s/tests/acceptance/logs/access.log" % dirs["base"],
+                         ],
+                         "when": {
+                             "status": [
+                                 "failure",
+                             ],
+                         },
                      },
                  ],
         "services": redisForOCStorage(storage),
