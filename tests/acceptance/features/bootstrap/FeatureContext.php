@@ -574,6 +574,83 @@ class FeatureContext extends BehatVariablesContext {
 	}
 
 	/**
+	 * Create a request-response log file
+	 *
+	 * @BeforeSuite
+	 *
+	 * @param BeforeSuiteScope $scope
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public static function setupLogFile(BeforeSuiteScope $scope): void {
+		$logPath = __DIR__ . '/../../logs';
+		$logFile = "$logPath/access.log";
+		if (!\file_exists($logPath)) {
+			\mkdir($logPath, 0777, true);
+		}
+		$file = \fopen($logFile, 'w') or die('Cannot open file:  ' . $logFile);
+		\fwrite($file, '# Access Logs' . "\n\n");
+		\fclose($file);
+	}
+
+	/**
+	 *
+	 * @BeforeScenario
+	 *
+	 * @param BeforeScenarioScope $scope
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public static function logScenario(BeforeScenarioScope $scope): void {
+		$suite = $scope->getFeature()->getFile();
+		$suite = \explode('/', $suite);
+		$suite = \array_slice($suite, -2);
+		$suite = \implode('/', $suite);
+		$scenarioLine = $scope->getScenario()->getLine();
+		$suite = $suite . ':' . $scenarioLine;
+
+		if ($scope->getScenario()->getNodeType() === "Example") {
+			$keyword = "Scenario Outline";
+			$title = $scope->getScenario()->getOutlineTitle();
+		} else {
+			$title = $scope->getScenario()->getTitle();
+			$keyword = $scope->getScenario()->getNodeType();
+		}
+	
+		$logPath = __DIR__ . '/../../logs';
+		$logFile = "$logPath/scenario.log";
+		$file = \fopen($logFile, 'w') or die('Cannot open file:  ' . $logFile);
+
+		$log = "## $suite" . "\n\n### $keyword: $title\n\n";
+		\fwrite($file, $log);
+		\fclose($file);
+	}
+
+	/**
+	 *
+	 * @BeforeStep
+	 *
+	 * @param BeforeStepScope $scope
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public static function logStepRequests(BeforeStepScope $scope): void {
+		$step = $scope->getStep()->getType();
+		$step = $step . " " . $scope->getStep()->getText();
+
+		$logPath = __DIR__ . '/../../logs';
+		$logFile = "$logPath/scenario.log";
+		$file = \fopen($logFile, 'a') or die('Cannot open file:  ' . $logFile);
+
+		$log = "#### $step\n";
+		\fwrite($file, $log);
+		\fclose($file);
+	}
+
+	/**
 	 * @param string $appTestCodeFullPath
 	 *
 	 * @return string the relative path from the core tests/acceptance dir

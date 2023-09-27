@@ -22,6 +22,7 @@
 
 use Behat\Behat\Context\Context;
 use Behat\Behat\Hook\Scope\BeforeScenarioScope;
+use Behat\Behat\Hook\Scope\AfterScenarioScope;
 use Behat\Gherkin\Node\TableNode;
 use PHPUnit\Framework\Assert;
 use TestHelpers\Asserts\WebDav as WebDavTest;
@@ -1369,5 +1370,69 @@ class WebDavPropertiesContext implements Context {
 		$environment = $scope->getEnvironment();
 		// Get all the contexts you need in this context
 		$this->featureContext = $environment->getContext('FeatureContext');
+	}
+
+	/**
+	 * Last hook
+	 *
+	 * @AfterScenario
+	 *
+	 * @param AfterScenarioScope $scope
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public static function checkScenario(AfterScenarioScope $scope): void {
+		$logPath = __DIR__ . '/../../logs';
+		$logFile = "$logPath/access.log";
+		$scenarioLog = "$logPath/scenario.log";
+
+		if ($scope->getTestResult()->getResultCode() !== 0 && !self::isExpectedToFail(self::getScenarioLine($scope))) {
+			$accessLogs = \file_get_contents($scenarioLog);
+
+			$file = \fopen($logFile, 'a') or die('Cannot open file:  ' . $logFile);
+			\fwrite($file, $accessLogs);
+			\fclose($file);
+		}
+
+		\unlink($scenarioLog);
+	}
+
+	/**
+	 * @param AfterScenarioScope $scope
+	 *
+	 * @return string
+	 */
+	public static function getScenarioLine(AfterScenarioScope $scope): string {
+		$suite = $scope->getFeature()->getFile();
+		$suite = \explode('/', $suite);
+		$suite = \array_slice($suite, -2);
+		$suite = \implode('/', $suite);
+		$scenarioLine = $scope->getScenario()->getLine();
+		return $suite . ':' . $scenarioLine;
+	}
+
+	/**
+	 * @param string $scenarioLine
+	 *
+	 * @return bool
+	 */
+	public static function isExpectedToFail(string $scenarioLine): bool {
+		$expectedFailFile = __DIR__ . '/../../expected-failures-localAPI-on-OCIS-storage.md';
+		if (\strpos($scenarioLine, "coreApi") === 0) {
+			$expectedFailFile = __DIR__ . '/../../expected-failures-API-on-OCIS-storage.md';
+		}
+
+		$reader = \fopen($expectedFailFile, 'r');
+		if ($reader) {
+			while (($line = \fgets($reader)) !== false) {
+				if (\strpos($line, $scenarioLine) !== false) {
+					\fclose($reader);
+					return true;
+				}
+			}
+			\fclose($reader);
+		}
+		return false;
 	}
 }
