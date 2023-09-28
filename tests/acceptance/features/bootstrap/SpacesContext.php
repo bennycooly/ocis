@@ -2730,8 +2730,8 @@ class SpacesContext implements Context {
 	 */
 	public function userGetsEtagOfElementInASpace(string $user, string $space, string $path) {
 		$this->setSpaceIDByName($user, $space);
-		$this->webDavPropertiesContext->storeEtagOfElement($user, $path);
-		return $this->featureContext->getEtagFromResponseXmlObject();
+		$xmlObject = $this->webDavPropertiesContext->storeEtagOfElement($user, $path);
+		return $this->featureContext->getEtagFromResponseXmlObject($xmlObject);
 	}
 
 	/**
