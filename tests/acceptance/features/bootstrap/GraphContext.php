@@ -363,14 +363,16 @@ class GraphContext implements Context {
 	/**
 	 * remove user from group
 	 *
-	 * @param string $groupId
-	 * @param string $userId
+	 * @param string $group
+	 * @param string $user
 	 * @param string|null $byUser
 	 *
 	 * @return ResponseInterface
 	 * @throws GuzzleException
 	 */
-	public function removeUserFromGroup(string $groupId, string $userId, ?string $byUser = null): ResponseInterface {
+	public function removeUserFromGroup(string $group, string $user, ?string $byUser = null): ResponseInterface {
+		$groupId = $this->featureContext->getAttributeOfCreatedGroup($group, "id") ?: WebDavHelper::generateUUIDv4();
+		$userId = $this->featureContext->getAttributeOfCreatedUser($user, "id");
 		$credentials = $this->getAdminOrUserCredentials($byUser);
 		return GraphHelper::removeUserFromGroup(
 			$this->featureContext->getBaseUrl(),
@@ -456,11 +458,8 @@ class GraphContext implements Context {
 	 */
 	public function adminHasRemovedUserFromGroupUsingTheGraphApi(string $user, string $group): void {
 		$user = $this->featureContext->getActualUsername($user);
-		$groupId = $this->featureContext->getAttributeOfCreatedGroup($group, "id");
-		$userId = $this->featureContext->getAttributeOfCreatedUser($user, "id");
-		$response = $this->removeUserFromGroup($groupId, $userId);
-		$this->featureContext->setResponse($response);
-		$this->featureContext->thenTheHTTPStatusCodeShouldBe(204);
+		$response = $this->removeUserFromGroup($group, $user);
+		$this->featureContext->TheHTTPStatusCodeShouldBe(204, '', $response);
 	}
 
 	/**
@@ -1202,9 +1201,7 @@ class GraphContext implements Context {
 		$usersGroups = $table->getColumnsHash();
 
 		foreach ($usersGroups as $userGroup) {
-			$groupId = $this->featureContext->getAttributeOfCreatedGroup($userGroup['groupname'], "id");
-			$userId = $this->featureContext->getAttributeOfCreatedUser($userGroup['username'], "id");
-			$this->featureContext->setResponse($this->removeUserFromGroup($groupId, $userId));
+			$this->featureContext->setResponse($this->removeUserFromGroup($userGroup['groupname'], $userGroup['username']));
 			$this->featureContext->pushToLastHttpStatusCodesArray();
 		}
 	}
@@ -1217,14 +1214,11 @@ class GraphContext implements Context {
 	 *
 	 * @return void
 	 */
-	public function theAdministratorTriesToRemoveUserFromGroupUsingTheGraphAPI(string $user, string $group): void {
-		$groupId = $this->featureContext->getAttributeOfCreatedGroup($group, "id");
-		$userId = $this->featureContext->getAttributeOfCreatedUser($user, "id");
-		$this->featureContext->setResponse($this->removeUserFromGroup($groupId, $userId));
+	public function theAdministratorRemoveUserFromGroupUsingTheGraphAPI(string $user, string $group): void {
+		$this->featureContext->setResponse($this->removeUserFromGroup($group, $user));
 	}
 
 	/**
-	 * @When the administrator tries to remove user :user from group :group using the Graph API
 	 * @When user :byUser tries to remove user :user from group :group using the Graph API
 	 *
 	 * @param string $user
@@ -1235,9 +1229,7 @@ class GraphContext implements Context {
 	 * @throws Exception | GuzzleException
 	 */
 	public function theUserTriesToRemoveAnotherUserFromGroupUsingTheGraphAPI(string $user, string $group, ?string $byUser = null): void {
-		$groupId = $this->featureContext->getAttributeOfCreatedGroup($group, "id");
-		$userId = $this->featureContext->getAttributeOfCreatedUser($user, "id");
-		$this->featureContext->setResponse($this->removeUserFromGroup($groupId, $userId, $byUser));
+		$this->featureContext->setResponse($this->removeUserFromGroup($group, $user, $byUser));
 	}
 
 	/**
@@ -1251,9 +1243,7 @@ class GraphContext implements Context {
 	 * @throws GuzzleException
 	 */
 	public function theUserTriesToRemoveAnotherUserFromNonExistentGroupUsingTheGraphAPI(string $user, ?string $byUser = null): void {
-		$groupId = WebDavHelper::generateUUIDv4();
-		$userId = $this->featureContext->getAttributeOfCreatedUser($user, "id");
-		$this->featureContext->setResponse($this->removeUserFromGroup($groupId, $userId, $byUser));
+		$this->featureContext->setResponse($this->removeUserFromGroup('', $user, $byUser));
 	}
 
 	/**
