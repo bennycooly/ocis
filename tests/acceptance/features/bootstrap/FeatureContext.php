@@ -3843,6 +3843,7 @@ class FeatureContext extends BehatVariablesContext {
 		if ($scope->getTestResult()->getResultCode() !== 0 && !self::isExpectedToFail(self::getScenarioLine($scope))) {
 			$accessLogs = \file_get_contents($scenarioLog);
 
+			var_dump("######## append log");
 			$file = \fopen($logFile, 'a') or die('Cannot open file:  ' . $logFile);
 			\fwrite($file, $accessLogs);
 			\fclose($file);
@@ -3876,6 +3877,8 @@ class FeatureContext extends BehatVariablesContext {
 			$expectedFailFile = __DIR__ . '/../../expected-failures-API-on-OCIS-storage.md';
 		}
 
+		var_dump($scenarioLine);
+		var_dump($expectedFailFile);
 		$reader = \fopen($expectedFailFile, 'r');
 		if ($reader) {
 			while (($line = \fgets($reader)) !== false) {
