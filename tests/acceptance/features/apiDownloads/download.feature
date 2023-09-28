@@ -60,11 +60,3 @@ Feature: Download file in project space
     Given user "Alice" has uploaded a file inside space "download file" with content "new content" to "file.txt"
     When user "Bob" tries to get version of the file "file.txt" with the index "1" of the space "download file" using the WebDAV API
     Then the HTTP status code should be "403"
-
-
-  Scenario: user downloads a file in the project space (fail)
-    When user "Alice" downloads the file "file.txt" of the space "download file" using the WebDAV API
-    Then the HTTP status code should be "201"
-    And the following headers should be set
-      | header         | value |
-      | Content-Length | 12    |
