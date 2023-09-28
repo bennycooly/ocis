@@ -12,12 +12,12 @@ Feature: download file
   Scenario Outline: download a file
     Given using <dav-path-version> DAV path
     When user "Alice" downloads file "/textfile0.txt" using the WebDAV API
-    Then the HTTP status code should be "201"
+    Then the HTTP status code should be "200"
     And the downloaded content should be "ownCloud test text file 0"
     Examples:
       | dav-path-version |
       | old              |
-      # | new              |
+      | new              |
 
     @skipOnRevaMaster
     Examples:
