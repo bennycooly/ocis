@@ -3037,11 +3037,7 @@ trait WebDav {
 		?string $content,
 		string $destination
 	):void {
-		if ($this->getDavPathVersion() === 3 && str_contains($destination, 'Shares')) {
-			$this->setResponse($this->userDownloadsOrUploadsSharedResource($user, $destination, 'PUT', null, null, $content));
-		} else {
-			$this->uploadFileWithContent($user, $content, $destination);
-		}
+		$this->uploadFileWithContent($user, $content, $destination);
 		$this->pushToLastHttpStatusCodesArray();
 	}
 
@@ -4646,10 +4642,91 @@ trait WebDav {
 	 * @return void
 	 */
 	public function downloadPreviewOfFiles(string $user, string $path, string $width, string $height):void {
-		if ($this->getDavPathVersion() === 3 && str_contains($path, 'Shares')) {
+		$response = $this->downloadPreviews(
+			$user,
+			$path,
+			null,
+			$width,
+			$height
+		);
+		$this->setResponse($response);
+	}
+
+	/**
+	 * @When user :user downloads the preview of shared resource :path with width :width and height :height using the WebDAV API
+	 *
+	 * @param string $user
+	 * @param string $path
+	 * @param string $width
+	 * @param string $height
+	 *
+	 * @return void
+	 */
+	public function userDownloadsThePreviewOfSharedResourceWithWidthAndHeightUsingTheWebdavApi(string $user, string $path, string $width, string $height): void {
+		if ($this->getDavPathVersion() === 3) {
 			$this->setResponse($this->userDownloadsOrUploadsSharedResource($user, $path, 'GET', $width, $height));
 		} else {
 			$this->setResponse($this->downloadPreviews($user, $path, null, $width, $height));
+		}
+	}
+
+	/**
+	 * @Given user :user has downloaded the preview of shared resource :path with width :width and height :height
+	 *
+	 * @param string $user
+	 * @param string $path
+	 * @param string $width
+	 * @param string $height
+	 *
+	 * @return void
+	 */
+	public function userHasDownloadedThePreviewOfSharedResourceWithWidthAndHeight(string $user, string $path, string $width, string $height): void {
+		$response = $this->userDownloadsThePreviewOfSharedResourceWithWidthAndHeightUsingTheWebdavApi($user, $path, $width, $height);
+		$this->theHTTPStatusCodeShouldBe(200, '', $response);
+		$this->imageDimensionsShouldBe($width, $height);
+		// save response to user response dictionary for further comparisons
+		$this->userResponseBodyContents[$user] = $this->responseBodyContent;
+	}
+
+	/**
+	 * @Then as user :user the preview of shared resource :path with width :width and height :height should have been changed
+	 *
+	 * @param string $user
+	 * @param string $path
+	 * @param string $width
+	 * @param string $height
+	 *
+	 * @return void
+	 */
+	public function asUserThePreviewOfSharedResourceWithWidthAndHeightShouldHaveBeenChanged(string $user, string $path, string $width, string $height):void {
+		$response = $this->userDownloadsThePreviewOfSharedResourceWithWidthAndHeightUsingTheWebdavApi($user, $path, $width, $height);
+		$this->theHTTPStatusCodeShouldBe(200, '', $response);
+		$newResponseBodyContents = $this->response->getBody()->getContents();
+		Assert::assertNotEquals(
+			$newResponseBodyContents,
+			// different users can download files before and after an update is made to a file
+			// previous response content is fetched from user response body content array for that user
+			$this->userResponseBodyContents[$user],
+			__METHOD__ . " previous and current previews content is same but expected to be different",
+		);
+		// update the saved content for the next comparison
+		$this->userResponseBodyContents[$user] = $newResponseBodyContents;
+	}
+
+	/**
+	 * @When user :user uploads file with content :content to shared resource :destination using the WebDAV API
+	 *
+	 * @param string $user
+	 * @param string $content
+	 * @param string $destination
+	 *
+	 * @return void
+	 */
+	public function userUploadsFileWithContentSharedResourceToUsingTheWebdavApi(string $user, string $content, string $destination): void {
+		if ($this->getDavPathVersion() === 3) {
+			$this->setResponse($this->userDownloadsOrUploadsSharedResource($user, $destination, 'PUT', null, null, $content));
+		} else {
+			$this->uploadFileWithContent($user, $content, $destination);
 		}
 	}
 
@@ -4815,8 +4892,8 @@ trait WebDav {
 	 * @return void
 	 */
 	public function userDownloadsThePreviewOfWithWidthAndHeight(string $user, string $path, string $width, string $height):void {
-		$this->downloadPreviewOfFiles($user, $path, $width, $height);
-		$this->theHTTPStatusCodeShouldBe(200);
+		$response = $this->downloadPreviewOfFiles($user, $path, $width, $height);
+		$this->theHTTPStatusCodeShouldBe(200, '', $response);
 		$this->imageDimensionsShouldBe($width, $height);
 		// save response to user response dictionary for further comparisons
 		$this->userResponseBodyContents[$user] = $this->responseBodyContent;
@@ -4833,8 +4910,8 @@ trait WebDav {
 	 * @return void
 	 */
 	public function asUserThePreviewOfPathWithHeightAndWidthShouldHaveBeenChanged(string $user, string $path, string $width, string $height):void {
-		$this->downloadPreviewOfFiles($user, $path, $width, $height);
-		$this->theHTTPStatusCodeShouldBe(200);
+		$response = $this->downloadPreviewOfFiles($user, $path, $width, $height);
+		$this->theHTTPStatusCodeShouldBe(200, '', $response);
 		$newResponseBodyContents = $this->response->getBody()->getContents();
 		Assert::assertNotEquals(
 			$newResponseBodyContents,
