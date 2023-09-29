@@ -29,7 +29,6 @@ import (
 	"github.com/cs3org/reva/v2/pkg/share"
 	"google.golang.org/genproto/protobuf/field_mask"
 
-	userv1beta1 "github.com/cs3org/go-cs3apis/cs3/identity/user/v1beta1"
 	collaboration "github.com/cs3org/go-cs3apis/cs3/sharing/collaboration/v1beta1"
 	provider "github.com/cs3org/go-cs3apis/cs3/storage/provider/v1beta1"
 	typespb "github.com/cs3org/go-cs3apis/cs3/types/v1beta1"
@@ -242,8 +241,6 @@ func (m *manager) UpdateShare(ctx context.Context, ref *collaboration.ShareRefer
 							m.shares[i].Permissions = updated.Permissions
 						case "expiration":
 							m.shares[i].Expiration = updated.Expiration
-						case "hide":
-							m.shares[i].Hide = updated.Hide
 						default:
 							return nil, errtypes.NotSupported("updating " + path + " is not supported")
 						}
@@ -337,7 +334,7 @@ func (m *manager) getReceived(ctx context.Context, ref *collaboration.ShareRefer
 	user := ctxpkg.ContextMustGetUser(ctx)
 	for _, s := range m.shares {
 		if sharesEqual(ref, s) {
-			if user.GetId().GetType() == userv1beta1.UserType_USER_TYPE_SERVICE || share.IsGrantedToUser(s, user) {
+			if share.IsGrantedToUser(s, user) {
 				rs := m.convert(ctx, s)
 				return rs, nil
 			}
@@ -346,12 +343,13 @@ func (m *manager) getReceived(ctx context.Context, ref *collaboration.ShareRefer
 	return nil, errtypes.NotFound(ref.String())
 }
 
-func (m *manager) UpdateReceivedShare(ctx context.Context, receivedShare *collaboration.ReceivedShare, fieldMask *field_mask.FieldMask, forUser *userv1beta1.UserId) (*collaboration.ReceivedShare, error) {
+func (m *manager) UpdateReceivedShare(ctx context.Context, receivedShare *collaboration.ReceivedShare, fieldMask *field_mask.FieldMask) (*collaboration.ReceivedShare, error) {
 	rs, err := m.getReceived(ctx, &collaboration.ShareReference{Spec: &collaboration.ShareReference_Id{Id: receivedShare.Share.Id}})
 	if err != nil {
 		return nil, err
 	}
 
+	user := ctxpkg.ContextMustGetUser(ctx)
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
@@ -361,38 +359,30 @@ func (m *manager) UpdateReceivedShare(ctx context.Context, receivedShare *collab
 			rs.State = receivedShare.State
 		case "mount_point":
 			rs.MountPoint = receivedShare.MountPoint
-		case "hide":
-			continue
 		default:
 			return nil, errtypes.NotSupported("updating " + fieldMask.Paths[i] + " is not supported")
 		}
 	}
 
-	u := ctxpkg.ContextMustGetUser(ctx)
-	uid := u.GetId().String()
-	if u.GetId().GetType() == userv1beta1.UserType_USER_TYPE_SERVICE {
-		uid = forUser.String()
-	}
-
 	// Persist state
-	if v, ok := m.shareState[uid]; ok {
+	if v, ok := m.shareState[user.Id.String()]; ok {
 		v[rs.Share.Id] = rs.State
-		m.shareState[uid] = v
+		m.shareState[user.Id.String()] = v
 	} else {
 		a := map[*collaboration.ShareId]collaboration.ShareState{
 			rs.Share.Id: rs.State,
 		}
-		m.shareState[uid] = a
+		m.shareState[user.Id.String()] = a
 	}
 	// Persist mount point
-	if v, ok := m.shareMountPoint[uid]; ok {
+	if v, ok := m.shareMountPoint[user.Id.String()]; ok {
 		v[rs.Share.Id] = rs.MountPoint
-		m.shareMountPoint[uid] = v
+		m.shareMountPoint[user.Id.String()] = v
 	} else {
 		a := map[*collaboration.ShareId]*provider.Reference{
 			rs.Share.Id: rs.MountPoint,
 		}
-		m.shareMountPoint[uid] = a
+		m.shareMountPoint[user.Id.String()] = a
 	}
 
 	return rs, nil

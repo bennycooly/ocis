@@ -301,9 +301,7 @@ func (s *service) UpdateReceivedShare(ctx context.Context, req *collaboration.Up
 		}, nil
 	}
 
-	var uid userpb.UserId
-	_ = utils.ReadJSONFromOpaque(req.Opaque, "userid", &uid)
-	share, err := s.sm.UpdateReceivedShare(ctx, req.Share, req.UpdateMask, &uid)
+	share, err := s.sm.UpdateReceivedShare(ctx, req.Share, req.UpdateMask)
 	if err != nil {
 		return &collaboration.UpdateReceivedShareResponse{
 			Status: status.NewInternal(ctx, "error updating received share"),

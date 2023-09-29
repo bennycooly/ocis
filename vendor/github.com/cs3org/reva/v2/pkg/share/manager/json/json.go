@@ -403,8 +403,6 @@ func (m *mgr) UpdateShare(ctx context.Context, ref *collaboration.ShareReference
 				m.model.Shares[idx].Permissions = updated.Permissions
 			case "expiration":
 				m.model.Shares[idx].Expiration = updated.Expiration
-			case "hide":
-				continue
 			default:
 				return nil, errtypes.NotSupported("updating " + fieldMask.Paths[i] + " is not supported")
 			}
@@ -544,13 +542,13 @@ func (m *mgr) getReceived(ctx context.Context, ref *collaboration.ShareReference
 		return nil, err
 	}
 	user := ctxpkg.ContextMustGetUser(ctx)
-	if user.GetId().GetType() != userv1beta1.UserType_USER_TYPE_SERVICE && !share.IsGrantedToUser(s, user) {
+	if !share.IsGrantedToUser(s, user) {
 		return nil, errtypes.NotFound(ref.String())
 	}
 	return m.convert(user.Id, s), nil
 }
 
-func (m *mgr) UpdateReceivedShare(ctx context.Context, receivedShare *collaboration.ReceivedShare, fieldMask *field_mask.FieldMask, forUser *userv1beta1.UserId) (*collaboration.ReceivedShare, error) {
+func (m *mgr) UpdateReceivedShare(ctx context.Context, receivedShare *collaboration.ReceivedShare, fieldMask *field_mask.FieldMask) (*collaboration.ReceivedShare, error) {
 	rs, err := m.getReceived(ctx, &collaboration.ShareReference{Spec: &collaboration.ShareReference_Id{Id: receivedShare.Share.Id}})
 	if err != nil {
 		return nil, err
@@ -570,31 +568,27 @@ func (m *mgr) UpdateReceivedShare(ctx context.Context, receivedShare *collaborat
 		}
 	}
 
-	u := ctxpkg.ContextMustGetUser(ctx)
-	uid := u.GetId().String()
-	if u.GetId().GetType() == userv1beta1.UserType_USER_TYPE_SERVICE {
-		uid = forUser.String()
-	}
+	user := ctxpkg.ContextMustGetUser(ctx)
 	// Persist state
-	if v, ok := m.model.State[uid]; ok {
+	if v, ok := m.model.State[user.Id.String()]; ok {
 		v[rs.Share.Id.String()] = rs.State
-		m.model.State[uid] = v
+		m.model.State[user.Id.String()] = v
 	} else {
 		a := map[string]collaboration.ShareState{
 			rs.Share.Id.String(): rs.State,
 		}
-		m.model.State[uid] = a
+		m.model.State[user.Id.String()] = a
 	}
 
 	// Persist mount point
-	if v, ok := m.model.MountPoint[uid]; ok {
+	if v, ok := m.model.MountPoint[user.Id.String()]; ok {
 		v[rs.Share.Id.String()] = rs.MountPoint
-		m.model.MountPoint[uid] = v
+		m.model.MountPoint[user.Id.String()] = v
 	} else {
 		a := map[string]*provider.Reference{
 			rs.Share.Id.String(): rs.MountPoint,
 		}
-		m.model.MountPoint[uid] = a
+		m.model.MountPoint[user.Id.String()] = a
 	}
 
 	if err := m.model.Save(); err != nil {

@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	userpb "github.com/cs3org/go-cs3apis/cs3/identity/user/v1beta1"
 	collaboration "github.com/cs3org/go-cs3apis/cs3/sharing/collaboration/v1beta1"
 	provider "github.com/cs3org/go-cs3apis/cs3/storage/provider/v1beta1"
 	typespb "github.com/cs3org/go-cs3apis/cs3/types/v1beta1"
@@ -423,8 +422,7 @@ func (m *mgr) GetReceivedShare(ctx context.Context, ref *collaboration.ShareRefe
 
 }
 
-func (m *mgr) UpdateReceivedShare(ctx context.Context, receivedShare *collaboration.ReceivedShare, fieldMask *field_mask.FieldMask, _ *userpb.UserId) (*collaboration.ReceivedShare, error) {
-	// TODO: How to inject the uid when a UserId is set? override it in the ctx? Add parameter to GetReceivedShare?
+func (m *mgr) UpdateReceivedShare(ctx context.Context, receivedShare *collaboration.ReceivedShare, fieldMask *field_mask.FieldMask) (*collaboration.ReceivedShare, error) {
 	rs, err := m.GetReceivedShare(ctx, &collaboration.ShareReference{Spec: &collaboration.ShareReference_Id{Id: receivedShare.Share.Id}})
 	if err != nil {
 		return nil, err
@@ -447,8 +445,6 @@ func (m *mgr) UpdateReceivedShare(ctx context.Context, receivedShare *collaborat
 			fields = append(fields, "file_target=?")
 			rs.MountPoint = receivedShare.MountPoint
 			params = append(params, rs.MountPoint.Path)
-		case "hide":
-			continue
 		default:
 			return nil, errtypes.NotSupported("updating " + fieldMask.Paths[i] + " is not supported")
 		}

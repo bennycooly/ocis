@@ -169,7 +169,6 @@ type ShareData struct {
 	Quicklink bool `json:"quicklink,omitempty" xml:"quicklink,omitempty"`
 	// PasswordProtected represents a public share is password protected
 	// PasswordProtected bool `json:"password_protected,omitempty" xml:"password_protected,omitempty"`
-	Hide bool `json:"hide" xml:"hide"`
 }
 
 // ShareeData holds share recipient search results
@@ -230,7 +229,6 @@ func CS3Share2ShareData(ctx context.Context, share *collaboration.Share) (*Share
 		// Displaynames are added later
 		UIDOwner:     LocalUserIDToString(share.GetCreator()),
 		UIDFileOwner: LocalUserIDToString(share.GetOwner()),
-		Hide:         share.Hide,
 	}
 
 	if share.Grantee.Type == provider.GranteeType_GRANTEE_TYPE_USER {
