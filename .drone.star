@@ -115,20 +115,20 @@ config = {
                 "apiReshare",
                 "apiSpacesDavOperation",
             ],
-            "skip": True,
+            "skip": False,
         },
         "apiAccountsHashDifficulty": {
             "suites": [
                 "apiAccountsHashDifficulty",
             ],
             "accounts_hash_difficulty": "default",
-            "skip": True,
+            "skip": False,
         },
         "apiNotification": {
             "suites": [
                 "apiNotification",
             ],
-            "skip": True,
+            "skip": False,
             "emailNeeded": True,
             "extraEnvironment": {
                 "EMAIL_HOST": "email",
@@ -144,7 +144,7 @@ config = {
             "suites": [
                 "apiAntivirus",
             ],
-            "skip": True,
+            "skip": False,
             "antivirusNeeded": True,
             "extraServerEnvironment": {
                 "ANTIVIRUS_SCANNER_TYPE": "clamav",
@@ -158,14 +158,14 @@ config = {
             "suites": [
                 "apiSearch",
             ],
-            "skip": True,
+            "skip": False,
             "tikaNeeded": True,
         },
     },
     "apiTests": {
         "numberOfParts": 10,
         "skip": False,
-        "skipExceptParts": [9],
+        "skipExceptParts": [],
     },
     "uiTests": {
         "filterTags": "@ocisSmokeTest",

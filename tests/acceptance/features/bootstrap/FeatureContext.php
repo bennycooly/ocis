@@ -3820,19 +3820,16 @@ class FeatureContext extends BehatVariablesContext {
 	 */
 	public static function suiteEnd(): void {
 		$logPath = __DIR__ . '/../../logs';
-		$accessLog = "$logPath/access.log";
-		$logFile = "$logPath/scenario.log";
+		$logFile = "$logPath/access.log";
+		$scenarioLog = "$logPath/scenario.log";
 
-		$file = \fopen($accessLog, 'a+') or die('Cannot open file:  ' . $accessLog);
+		if (\file_exists($scenarioLog)) {
+			\unlink($scenarioLog);
+		}
+	
+		$file = \fopen($logFile, 'a+') or die('Cannot open file:  ' . $logFile);
 		\fwrite($file, "\n\n");
 		\fclose($file);
-
-		var_dump("Suite -------------------------------");
-		$accessLogs = \file_get_contents($accessLog);
-		var_dump($accessLogs);
-		if (\file_exists($logFile)) {
-			\unlink($logFile);
-		}
 	}
 
 	/**
@@ -3844,12 +3841,10 @@ class FeatureContext extends BehatVariablesContext {
 	 */
 	public static function clearScnarioLog(): void {
 		$logPath = __DIR__ . '/../../logs';
-		$logFile = "$logPath/scenario.log";
-		var_dump("Feature -------------------------------");
-		$accessLogs = \file_get_contents("$logPath/access.log");
-		var_dump($accessLogs);
-		if (\file_exists($logFile)) {
-			\unlink($logFile);
+		$scenarioLog = "$logPath/scenario.log";
+
+		if (\file_exists($scenarioLog)) {
+			\unlink($scenarioLog);
 		}
 	}
 
