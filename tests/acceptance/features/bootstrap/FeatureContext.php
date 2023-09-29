@@ -3815,16 +3815,38 @@ class FeatureContext extends BehatVariablesContext {
 	 *
 	 * @AfterSuite
 	 *
-	 * @param AfterSuiteScope $scope
+	 * @return void
+	 * @throws Exception
+	 */
+	public static function clearScnarioLogSuite(): void {
+		$logPath = __DIR__ . '/../../logs';
+		$logFile = "$logPath/scenario.log";
+		var_dump("Feature -------------------------------");
+		$accessLogs = \file_get_contents("$logPath/access.log");
+		var_dump($accessLogs);
+		if (\file_exists($logFile)) {
+			\unlink($logFile);
+		}
+	}
+
+	/**
+	 *
+	 * @AfterFeature
 	 *
 	 * @return void
 	 * @throws Exception
 	 */
-	public static function clearScnarioLog(AfterSuiteScope $scope): void {
+	public static function clearScnarioLog(): void {
 		$logPath = __DIR__ . '/../../logs';
 		$logFile = "$logPath/scenario.log";
-		\unlink($logFile);
+		var_dump("Feature -------------------------------");
+		$accessLogs = \file_get_contents("$logPath/access.log");
+		var_dump($accessLogs);
+		if (\file_exists($logFile)) {
+			\unlink($logFile);
+		}
 	}
+
 	/**
 	 * wrap up logs
 	 *
@@ -3843,16 +3865,17 @@ class FeatureContext extends BehatVariablesContext {
 		if ($scope->getTestResult()->getResultCode() !== 0 && !self::isExpectedToFail(self::getScenarioLine($scope))) {
 			$accessLogs = \file_get_contents($scenarioLog);
 
-			var_dump($accessLogs);
-
-			var_dump(\fopen($logFile, 'a'));
 			$file = \fopen($logFile, 'a') or die('Cannot open file:  ' . $logFile);
 			\fwrite($file, $accessLogs);
 			\fclose($file);
-			var_dump("######## log appended");
 		}
 
-		\unlink($scenarioLog);
+		var_dump("Scenario -------------------------------");
+		$accessLogs = \file_get_contents("$logPath/access.log");
+		var_dump($accessLogs);
+		if (\file_exists($scenarioLog)) {
+			\unlink($scenarioLog);
+		}
 	}
 
 	/**
