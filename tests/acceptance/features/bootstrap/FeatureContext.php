@@ -3843,10 +3843,13 @@ class FeatureContext extends BehatVariablesContext {
 		if ($scope->getTestResult()->getResultCode() !== 0 && !self::isExpectedToFail(self::getScenarioLine($scope))) {
 			$accessLogs = \file_get_contents($scenarioLog);
 
-			var_dump("######## append log");
+			var_dump($accessLogs);
+
+			var_dump(\fopen($logFile, 'a'));
 			$file = \fopen($logFile, 'a') or die('Cannot open file:  ' . $logFile);
 			\fwrite($file, $accessLogs);
 			\fclose($file);
+			var_dump("######## log appended");
 		}
 
 		\unlink($scenarioLog);
