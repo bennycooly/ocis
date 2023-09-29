@@ -3821,7 +3821,7 @@ class FeatureContext extends BehatVariablesContext {
 	public static function clearScnarioLogSuite(): void {
 		$logPath = __DIR__ . '/../../logs';
 		$logFile = "$logPath/scenario.log";
-		var_dump("Feature -------------------------------");
+		var_dump("Suite -------------------------------");
 		$accessLogs = \file_get_contents("$logPath/access.log");
 		var_dump($accessLogs);
 		if (\file_exists($logFile)) {

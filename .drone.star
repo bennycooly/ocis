@@ -276,8 +276,8 @@ def main(ctx):
         [releaseSubmodule(ctx)]
 
     build_release_helpers = [
-        changelog(),
-        docs(),
+        # changelog(),
+        # docs(),
     ]
 
     test_pipelines.append(
