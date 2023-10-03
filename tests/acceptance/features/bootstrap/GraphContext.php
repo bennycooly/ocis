@@ -173,8 +173,8 @@ class GraphContext implements Context {
 	 * @throws Exception
 	 */
 	public function theUserHasDisabledUserToUsingTheGraphApi(string $byUser, string $user): void {
-		$this->theUserDisablesUserToUsingTheGraphApi($byUser, $user);
-		$this->featureContext->thenTheHTTPStatusCodeShouldBe(200);
+		$response=$this->editUserUsingTheGraphApi($byUser, $user, null, null, null, null, false);
+		$this->featureContext->theHTTPStatusCodeShouldBe(200,"",$response);
 	}
 
 	/**
@@ -205,8 +205,9 @@ class GraphContext implements Context {
 	 * @throws JsonException
 	 */
 	public function theUserInformationShouldMatchTheJSON(string $user, PyStringNode $schemaString): void {
-		$this->adminHasRetrievedUserUsingTheGraphApi($user);
-		$this->featureContext->theDataOfTheResponseShouldMatch($schemaString);
+		$response = $this->adminHasRetrievedUserUsingTheGraphApi($user);
+		$this->featureContext->theHTTPStatusCodeShouldBe(200,"",$response);
+		$this->featureContext->theDataOfTheResponseShouldMatch($schemaString,$response);
 	}
 
 	/**
@@ -244,23 +245,21 @@ class GraphContext implements Context {
 	/**
 	 * @param string $user
 	 *
-	 * @return void
+	 * @return ResponseInterface
 	 * @throws JsonException
 	 * @throws GuzzleException
 	 */
-	public function adminHasRetrievedUserUsingTheGraphApi(string $user): void {
+	public function adminHasRetrievedUserUsingTheGraphApi(string $user): ResponseInterface {
 		$user = $this->featureContext->getActualUsername($user);
 		$userId = $this->featureContext->getAttributeOfCreatedUser($user, "id");
 		$userId = $userId ?: $user;
-		$result = GraphHelper::getUser(
+		return GraphHelper::getUser(
 			$this->featureContext->getBaseUrl(),
 			$this->featureContext->getStepLineRef(),
 			$this->featureContext->getAdminUsername(),
 			$this->featureContext->getAdminPassword(),
 			$userId
 		);
-		$this->featureContext->setResponse($result);
-		$this->featureContext->thenTheHTTPStatusCodeShouldBe(200);
 	}
 
 	/**
@@ -442,8 +441,8 @@ class GraphContext implements Context {
 	 * @throws GuzzleException
 	 */
 	public function theUserHasDeletesAUserUsingTheGraphAPI(string $byUser, string $user): void {
-		$this->adminDeletesUserUsingTheGraphApi($user, $byUser);
-		$this->featureContext->thenTheHTTPStatusCodeShouldBe(204);
+		$response=$this->editUserUsingTheGraphApi($byUser, $user, null, null, null, null, false);
+		$this->featureContext->theHTTPStatusCodeShouldBe(204,"",$response);
 	}
 
 	/**
@@ -1987,7 +1986,20 @@ class GraphContext implements Context {
 		foreach ($table->getHash() as $row) {
 			$userIds[] = $this->featureContext->getAttributeOfCreatedUser($row['username'], "id");
 		}
-		$this->addMultipleUsersToGroup($user, $userIds, $groupId, $table);
+		// $this->addMultipleUsersToGroup($user, $userIds, $groupId, $table);
+		$credentials = $this->getAdminOrUserCredentials($user);
+		$this->featureContext->verifyTableNodeColumns($table, ['username']);
+
+		// $this->featureContext->setResponse(
+			$response=	GraphHelper::addUsersToGroup(
+				$this->featureContext->getBaseUrl(),
+				$this->featureContext->getStepLineRef(),
+				$credentials["username"],
+				$credentials["password"],
+				$groupId,
+				$userIds
+			);
+		// );
 		$response = $this->featureContext->getResponse();
 		if ($response->getStatusCode() !== 204) {
 			$this->throwHttpException($response, "Cannot add users to group '$group'");
