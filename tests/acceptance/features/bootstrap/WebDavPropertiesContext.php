@@ -110,15 +110,13 @@ class WebDavPropertiesContext implements Context {
 		foreach ($propertiesTable->getColumnsHash() as $row) {
 			$properties[] = $row["propertyName"];
 		}
-		$depth = "1";
-		$this->featureContext->setResponseXmlObject(
-			$this->featureContext->listFolderAndReturnResponseXml(
+		$response = $this->featureContext->listFolder(
 				$user,
 				$path,
-				$depth,
+				"1",
 				$properties
-			)
 		);
+		$this->featureContext->setResponse($response);
 		$this->featureContext->pushToLastStatusCodesArrays();
 	}
 
@@ -526,7 +524,7 @@ class WebDavPropertiesContext implements Context {
 		string $key,
 		string $expectedValue
 	):void {
-		$this->checkSingleResponseContainsAPropertyWithValueAndAlternative(
+		$this->checkResponseContainsAPropertyWithValue(
 			$key,
 			$expectedValue,
 			$expectedValue
@@ -548,7 +546,7 @@ class WebDavPropertiesContext implements Context {
 		string $key,
 		string $expectedValue
 	):void {
-		$this->checkSingleResponseContainsAPropertyWithValueAndAlternative(
+		$this->checkResponseContainsAPropertyWithValue(
 			$key,
 			$expectedValue,
 			$expectedValue,
@@ -571,7 +569,7 @@ class WebDavPropertiesContext implements Context {
 		string $expectedValue,
 		string $altExpectedValue
 	):void {
-		$this->checkSingleResponseContainsAPropertyWithValueAndAlternative(
+		$this->checkResponseContainsAPropertyWithValue(
 			$key,
 			$expectedValue,
 			$altExpectedValue
@@ -587,13 +585,13 @@ class WebDavPropertiesContext implements Context {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function checkSingleResponseContainsAPropertyWithValueAndAlternative(
+	public function checkResponseContainsAPropertyWithValue(
 		string $key,
 		string $expectedValue,
 		string $altExpectedValue,
 		?string $user = null
 	):void {
-		$xmlPart = $this->featureContext->getResponseXmlObject()->xpath(
+		$xmlPart = $this->featureContext->getResponseXml()->xpath(
 			"//d:prop/$key"
 		);
 		Assert::assertTrue(
@@ -1045,7 +1043,7 @@ class WebDavPropertiesContext implements Context {
 	public function theResponseShouldContainAShareTypesPropertyWith(TableNode $table):void {
 		$this->featureContext->verifyTableNodeColumnsCount($table, 1);
 		WebdavTest::assertResponseContainsShareTypes(
-			$this->featureContext->getResponseXmlObject(),
+			$this->featureContext->getResponseXml(),
 			$table->getRows()
 		);
 	}
